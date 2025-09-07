@@ -1,5 +1,49 @@
 version: '3.8'
 
+services:
+  romanova-lv-netology-prometheus:
+    image: prom/prometheus:latest
+    container_name: romanova-lv-netology-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - romanova-lv-my-netology-hw
+    restart: unless-stopped
+    depends_on:
+      - romanova-lv-netology-pushgateway
+
+  romanova-lv-netology-pushgateway:
+    image: prom/pushgateway:latest
+    container_name: romanova-lv-netology-pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - romanova-lv-my-netology-hw
+    restart: unless-stopped
+
+  romanova-lv-netology-grafana:
+    image: grafana/grafana:latest
+    container_name: romanova-lv-netology-grafana
+    ports:
+      - "80:3000"
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_INSTALL_PLUGINS=
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
+    networks:
+      - romanova-lv-my-netology-hw
+    restart: unless-stopped
+    depends_on:
+      - romanova-lv-netology-prometheus
+
 networks:
   romanova-lv-my-netology-hw:
     driver: bridge
@@ -7,4 +51,6 @@ networks:
       config:
         - subnet: 10.5.0.0/16
 
-
+volumes:
+  prometheus_data:
+  grafana_data:
